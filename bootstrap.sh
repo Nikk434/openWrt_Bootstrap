@@ -98,12 +98,94 @@ do
     fi
 done
 
-echo "================ INSTALL REPORT ================"
-echo "[INSTALLED]$INSTALLED"
-echo "[ALREADY]  $ALREADY"
-echo "[FAILED]   $FAILED"
-echo "[KMOD OK]  $KMOD_OK"
-echo "[KMOD SKIP]$KMOD_SKIP"
-echo "================================================"
+echo "[+] Verifying installed binaries"
 
-echo "[✓] Bootstrap completed"
+verify_bin() {
+    if command -v "$1" >/dev/null 2>&1; then
+        echo "[OK] $1"
+    else
+        echo "[FAIL] $1 not found in PATH"
+        FAILED="$FAILED $1"
+    fi
+}
+
+verify_cmd() {
+    # Run an actual command and check exit code
+    if $1 >/dev/null 2>&1; then
+        echo "[OK] $2"
+    else
+        echo "[FAIL] $2"
+        FAILED="$FAILED $2"
+    fi
+}
+
+# Core utils
+verify_bin grep
+verify_bin sed
+verify_bin awk
+verify_bin find
+verify_bin which
+verify_bin watch
+verify_bin diff
+verify_bin file
+
+# Networking
+verify_bin ip
+verify_bin ethtool
+verify_bin iw
+verify_bin iwinfo
+verify_bin brctl
+
+# Firewall
+verify_bin iptables
+verify_bin conntrack
+
+# Capture
+verify_bin tcpdump
+
+# DNS
+verify_bin dnsmasq
+
+# Python
+verify_cmd "python3 --version" "python3"
+verify_cmd "pip3 --version" "pip3"
+
+# Python libs
+verify_cmd "python3 -c 'import paho.mqtt.client'" "paho-mqtt"
+verify_cmd "python3 -c 'import requests'" "requests"
+verify_cmd "python3 -c 'import urllib3'" "urllib3"
+verify_cmd "python3 -c 'import certifi'" "certifi"
+verify_cmd "python3 -c 'import logging'" "python3-logging"
+
+# JSON
+verify_bin jq
+
+# Lua
+verify_bin lua
+verify_cmd "lua -e 'require(\"cjson\")'" "lua-cjson"
+
+# Remote access
+verify_bin dropbear
+verify_bin rsync
+
+# TLS
+verify_bin openssl
+
+# Data tools
+verify_bin curl
+verify_bin wget
+verify_bin nc
+
+# Kernel modules
+echo "[+] Verifying kernel modules"
+for mod in nf_conntrack nf_nat br_netfilter ifb; do
+    if lsmod | grep -q "^$mod"; then
+        echo "[OK] kmod $mod loaded"
+    else
+        echo "[WARN] kmod $mod not loaded (may be built-in or skipped)"
+    fi
+done
+
+echo "================ VERIFY REPORT ================"
+echo "[FAILED/MISSING]: $FAILED"
+echo "================================================"
