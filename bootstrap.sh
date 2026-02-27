@@ -28,12 +28,13 @@ install_pkgs() {
 
 echo "[+] Core utilities"
 install_pkgs \
-busybox coreutils util-linux procps-ng findutils \
+coreutils util-linux procps-ng findutils \
 grep sed awk diffutils file which watch
 
 echo "[+] Networking"
 install_pkgs \
-iproute2 bridge-utils net-tools ethtool iw iwinfo wireless-tools
+iproute2 bridge-utils net-tools ethtool \
+iw iwinfo wireless-tools
 
 echo "[+] Firewall"
 install_pkgs \
@@ -49,15 +50,14 @@ install_pkgs dnsmasq
 echo "[+] Logging & persistence"
 install_pkgs logrotate block-mount
 
-echo "[+] Python environment"
+echo "[+] Python environment (opkg only)"
 install_pkgs \
-python3 python3-light python3-logging python3-pip
+python3 python3-light python3-logging \
+python3-requests python3-urllib3 \
+python3-certifi python3-paho-mqtt \
+python3-pip
 
 python3 --version
-pip3 --version
-
-echo "[+] Python libraries"
-pip3 install --no-cache-dir paho-mqtt requests urllib3 certifi
 
 echo "[+] JSON tools"
 install_pkgs jq
@@ -74,9 +74,16 @@ install_pkgs openssl-util libopenssl
 echo "[+] Data push"
 install_pkgs curl wget libcurl netcat
 
-echo "[+] Kernel modules"
-install_pkgs \
+echo "[+] Kernel modules (best effort)"
+for mod in \
 kmod-nf-conntrack kmod-nf-nat kmod-ipt-core \
 kmod-ipt-nat kmod-br-netfilter kmod-ifb
+do
+    if opkg install "$mod"; then
+        echo "[+] Installed $mod"
+    else
+        echo "[!] Skipped $mod (kernel mismatch or unavailable)"
+    fi
+done
 
 echo "[✓] Bootstrap completed successfully"
