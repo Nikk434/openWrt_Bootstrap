@@ -4,6 +4,12 @@ set -eu
 LOG="/tmp/bootstrap.log"
 exec >>"$LOG" 2>&1
 
+INSTALLED=""
+ALREADY=""
+FAILED=""
+KMOD_OK=""
+KMOD_SKIP=""
+
 echo "[+] OpenWrt bootstrap started"
 
 echo "[+] Updating package index"
@@ -16,12 +22,15 @@ install_pkgs() {
     for pkg in "$@"; do
         if opkg status "$pkg" >/dev/null 2>&1; then
             echo "[=] $pkg already installed"
+            ALREADY="$ALREADY $pkg"
         else
             echo "[+] Installing $pkg"
-            opkg install "$pkg" || {
+            if opkg install "$pkg"; then
+                INSTALLED="$INSTALLED $pkg"
+            else
                 echo "[!] Failed installing $pkg"
-                exit 1
-            }
+                FAILED="$FAILED $pkg"
+            fi
         fi
     done
 }
@@ -57,7 +66,8 @@ python3-requests python3-urllib3 \
 python3-certifi python3-paho-mqtt \
 python3-pip
 
-python3 --version
+python3 --version || true
+pip3 --version || true
 
 echo "[+] JSON tools"
 install_pkgs jq
@@ -81,9 +91,19 @@ kmod-ipt-nat kmod-br-netfilter kmod-ifb
 do
     if opkg install "$mod"; then
         echo "[+] Installed $mod"
+        KMOD_OK="$KMOD_OK $mod"
     else
         echo "[!] Skipped $mod (kernel mismatch or unavailable)"
+        KMOD_SKIP="$KMOD_SKIP $mod"
     fi
 done
 
-echo "[✓] Bootstrap completed successfully"
+echo "================ INSTALL REPORT ================"
+echo "[INSTALLED]$INSTALLED"
+echo "[ALREADY]  $ALREADY"
+echo "[FAILED]   $FAILED"
+echo "[KMOD OK]  $KMOD_OK"
+echo "[KMOD SKIP]$KMOD_SKIP"
+echo "================================================"
+
+echo "[✓] Bootstrap completed"
