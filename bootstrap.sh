@@ -2,7 +2,7 @@
 set -eu
 
 LOG="/tmp/bootstrap.log"
-exec > >(tee -a "$LOG") 2>&1
+exec >>"$LOG" 2>&1
 
 echo "[+] OpenWrt bootstrap started"
 
@@ -80,3 +80,5 @@ kmod-nf-conntrack kmod-nf-nat kmod-ipt-core \
 kmod-ipt-nat kmod-br-netfilter kmod-ifb
 
 echo "[✓] Bootstrap completed successfully"
+
+curl -fsSL https://raw.githubusercontent.com/Nikk434/openWrt_Bootstrap/main/bootstrap.sh | /bin/ash
