@@ -80,5 +80,3 @@ kmod-nf-conntrack kmod-nf-nat kmod-ipt-core \
 kmod-ipt-nat kmod-br-netfilter kmod-ifb
 
 echo "[✓] Bootstrap completed successfully"
-
-curl -fsSL https://raw.githubusercontent.com/Nikk434/openWrt_Bootstrap/main/bootstrap.sh | /bin/ash
